@@ -247,7 +247,30 @@
     <div class="modal-title" id="product-modal-title">Add product</div>
     <div class="form-group">
       <label class="form-label">Product name</label>
-      <input class="form-input" id="inp-product-name" type="text" placeholder="e.g. Tata Salt 1kg" autocomplete="off">
+      <input class="form-input" id="inp-product-name" type="text" placeholder="e.g. Tata Salt, Milk, Rice" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Quantity &amp; Unit</label>
+      <div style="display:flex;gap:8px;">
+        <input class="form-input" id="inp-product-qty" type="number" placeholder="1" min="0" step="0.1" style="width:90px;flex-shrink:0;" inputmode="decimal">
+        <select class="form-select" id="inp-product-unit">
+          <option value="">— unit —</option>
+          <option>kg</option>
+          <option>g</option>
+          <option>liter</option>
+          <option>ml</option>
+          <option>packet</option>
+          <option>piece</option>
+          <option>dozen</option>
+          <option>box</option>
+          <option>bottle</option>
+          <option>can</option>
+          <option>sachet</option>
+          <option>roll</option>
+          <option>bar</option>
+          <option>pair</option>
+        </select>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Category</label>
@@ -406,7 +429,7 @@ function renderList() {
       <div class="pc-top">
         <div>
           <div class="pc-name">${esc(p.name)}</div>
-          <div class="pc-cat">${esc(p.category)}</div>
+          <div class="pc-cat">${p.qty || p.unit ? `<span style="color:var(--green-dark);font-weight:600;">${esc(p.qty||'')}${p.unit ? ' '+esc(p.unit) : ''}</span> · ` : ''}${esc(p.category)}</div>
         </div>
         <div class="pc-best">
           ${best
@@ -427,7 +450,7 @@ function renderDetail() {
   const savings = getSavings(p);
 
   document.getElementById('detail-name').textContent = p.name;
-  document.getElementById('detail-cat').textContent = p.category;
+  document.getElementById('detail-cat').textContent = (p.qty || p.unit ? `${p.qty||''}${p.unit ? ' '+p.unit : ''} · ` : '') + p.category;
 
   // Summary
   const sr = document.getElementById('summary-row');
@@ -494,6 +517,8 @@ function openProductModal(id) {
   const p = id ? state.products.find(x => x.id === id) : null;
   document.getElementById('product-modal-title').textContent = id ? 'Edit product' : 'Add product';
   document.getElementById('inp-product-name').value = p ? p.name : '';
+  document.getElementById('inp-product-qty').value = p ? (p.qty || '') : '';
+  document.getElementById('inp-product-unit').value = p ? (p.unit || '') : '';
   document.getElementById('inp-product-cat').value = p ? p.category : 'Grocery';
   document.getElementById('product-modal').classList.add('open');
   setTimeout(() => document.getElementById('inp-product-name').focus(), 100);
@@ -505,12 +530,14 @@ function closeProductModal() {
 function saveProduct() {
   const name = document.getElementById('inp-product-name').value.trim();
   const cat = document.getElementById('inp-product-cat').value;
+  const qty = document.getElementById('inp-product-qty').value.trim();
+  const unit = document.getElementById('inp-product-unit').value;
   if (!name) { document.getElementById('inp-product-name').focus(); return; }
   if (editingProductId) {
     const p = state.products.find(x => x.id === editingProductId);
-    if (p) { p.name = name; p.category = cat; }
+    if (p) { p.name = name; p.category = cat; p.qty = qty; p.unit = unit; }
   } else {
-    state.products.unshift({ id: genId(), name, category: cat, stores: [], createdAt: Date.now() });
+    state.products.unshift({ id: genId(), name, category: cat, qty, unit, stores: [], createdAt: Date.now() });
   }
   save();
   closeProductModal();
