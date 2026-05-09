@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Price Scout">
+<meta name="theme-color" content="#1D9E75">
+<title>Price Scout</title>
+<style>
+  :root {
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-mid: #5DCAA5;
+    --green-dark: #0F6E56;
+    --green-darker: #085041;
+    --amber: #f59e0b;
+    --amber-light: #fef3c7;
+    --red: #ef4444;
+    --red-light: #fee2e2;
+    --bg: #f8f7f4;
+    --surface: #ffffff;
+    --surface2: #f1f0ec;
+    --border: rgba(0,0,0,0.10);
+    --border-med: rgba(0,0,0,0.16);
+    --text: #1a1a18;
+    --text2: #5a5a55;
+    --text3: #9a9990;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141412;
+      --surface: #1e1e1b;
+      --surface2: #272724;
+      --border: rgba(255,255,255,0.10);
+      --border-med: rgba(255,255,255,0.16);
+      --text: #f0efe8;
+      --text2: #a0a099;
+      --text3: #606058;
+      --green-light: #0a2e22;
+      --amber-light: #2a1f04;
+      --red-light: #2a0d0d;
+      --shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; color: var(--text); overscroll-behavior: none; }
+
+  /* Layout */
+  #app { display: flex; flex-direction: column; height: 100vh; max-width: 480px; margin: 0 auto; background: var(--bg); }
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 16px 12px; flex-shrink: 0; }
+  .header-row { display: flex; align-items: center; justify-content: space-between; }
+  .header-logo { display: flex; align-items: center; gap: 9px; }
+  .logo-icon { width: 36px; height: 36px; background: var(--green); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .header-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+  .header-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
+  .btn-add { background: var(--green); color: #fff; border: none; border-radius: 20px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; letter-spacing: -0.1px; }
+  .btn-add:active { opacity: 0.85; transform: scale(0.97); }
+
+  .search-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 16px; flex-shrink: 0; }
+  .search-inner { position: relative; }
+  .search-inner svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: var(--text3); fill: none; stroke-width: 2; stroke-linecap: round; }
+  .search-inner input { width: 100%; padding: 9px 12px 9px 34px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface2); font-size: 15px; color: var(--text); outline: none; }
+  .search-inner input::placeholder { color: var(--text3); }
+  .search-inner input:focus { border-color: var(--green-mid); }
+
+  .scroll-area { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 16px 24px; }
+
+  /* Product cards */
+  .product-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; cursor: pointer; transition: transform 0.1s; }
+  .product-card:active { transform: scale(0.985); }
+  .pc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .pc-name { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.2px; }
+  .pc-cat { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .pc-best { text-align: right; flex-shrink: 0; }
+  .pc-price { font-size: 16px; font-weight: 700; color: var(--green-dark); }
+  .pc-store-name { font-size: 11px; color: var(--green); margin-top: 1px; }
+  .pc-no-price { font-size: 12px; color: var(--text3); padding-top: 2px; }
+  .pc-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .pill { font-size: 11px; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--border); color: var(--text2); background: var(--surface2); }
+  .pill.best { background: var(--green-light); color: var(--green-dark); border-color: var(--green-mid); }
+  .pill.savings { background: var(--amber-light); color: #92400e; border-color: #fcd34d; }
+  @media (prefers-color-scheme: dark) { .pill.savings { color: #fcd34d; } }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 60px 24px; }
+  .empty-icon { width: 64px; height: 64px; background: var(--surface2); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+  .empty-icon svg { width: 32px; height: 32px; stroke: var(--text3); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .empty h3 { font-size: 16px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+  .empty p { font-size: 14px; color: var(--text3); line-height: 1.5; }
+
+  /* Detail view */
+  #detail-view { display: none; flex-direction: column; height: 100vh; max-width: 480px; margin: 0 auto; background: var(--bg); }
+  .detail-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 16px 14px; flex-shrink: 0; }
+  .back-btn { display: flex; align-items: center; gap: 6px; color: var(--green); font-size: 15px; font-weight: 500; background: none; border: none; cursor: pointer; padding: 0 0 12px; }
+  .back-btn svg { width: 18px; height: 18px; stroke: var(--green); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .detail-title-row { display: flex; align-items: flex-start; justify-content: space-between; }
+  .detail-name { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; color: var(--text); }
+  .detail-cat { font-size: 13px; color: var(--text3); margin-top: 3px; }
+  .detail-actions { display: flex; gap: 8px; }
+  .icon-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: var(--text2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn.danger svg { stroke: var(--red); }
+  .icon-btn:active { transform: scale(0.93); }
+
+  .summary-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px 0; }
+  .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .sc-label { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; }
+  .sc-value { font-size: 20px; font-weight: 700; color: var(--green-dark); margin-top: 4px; letter-spacing: -0.5px; }
+  .sc-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; padding: 16px 16px 8px; }
+  .detail-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 24px; }
+
+  .store-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin: 0 16px 8px; padding: 13px 14px; display: flex; align-items: center; justify-content: space-between; }
+  .store-item.best { border-color: var(--green-mid); background: var(--green-light); }
+  .si-left { display: flex; align-items: center; gap: 11px; }
+  .si-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--surface2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .store-item.best .si-icon { background: rgba(29,158,117,0.15); }
+  .si-icon svg { width: 20px; height: 20px; fill: none; stroke: var(--text3); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .store-item.best .si-icon svg { stroke: var(--green); }
+  .si-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .store-item.best .si-name { color: var(--green-darker); }
+  .si-date { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .store-item.best .si-date { color: var(--green-dark); opacity: 0.8; }
+  .si-right { display: flex; align-items: center; gap: 10px; }
+  .si-price { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+  .store-item.best .si-price { color: var(--green-darker); }
+  .best-badge { font-size: 10px; background: var(--green); color: #fff; padding: 2px 7px; border-radius: 20px; font-weight: 600; }
+  .si-btns { display: flex; gap: 6px; }
+  .si-btn { background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px; }
+  .si-btn svg { width: 16px; height: 16px; fill: none; stroke: var(--text3); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .si-btn.del svg { stroke: var(--red); }
+  .si-btn:active { opacity: 0.6; }
+
+  .add-store-btn { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 16px 0; background: none; border: 1.5px dashed var(--border-med); border-radius: var(--radius); padding: 14px; font-size: 14px; font-weight: 500; color: var(--text2); cursor: pointer; width: calc(100% - 32px); }
+  .add-store-btn svg { width: 18px; height: 18px; fill: none; stroke: var(--text3); stroke-width: 2; stroke-linecap: round; }
+  .add-store-btn:active { background: var(--surface2); }
+
+  /* Modals */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet { background: var(--surface); border-radius: 20px 20px 0 0; padding: 0 16px 40px; width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto; animation: slideUp 0.25s ease; }
+  @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-handle { width: 36px; height: 4px; background: var(--border-med); border-radius: 2px; margin: 12px auto 20px; }
+  .modal-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 20px; letter-spacing: -0.3px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+  .form-input { width: 100%; padding: 12px 14px; border: 1px solid var(--border-med); border-radius: var(--radius-sm); background: var(--surface2); font-size: 16px; color: var(--text); outline: none; }
+  .form-input:focus { border-color: var(--green-mid); background: var(--surface); }
+  .form-select { width: 100%; padding: 12px 14px; border: 1px solid var(--border-med); border-radius: var(--radius-sm); background: var(--surface2); font-size: 16px; color: var(--text); outline: none; appearance: none; }
+  .form-actions { display: flex; gap: 10px; margin-top: 24px; }
+  .form-actions button { flex: 1; padding: 14px; font-size: 15px; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; border: none; }
+  .btn-cancel { background: var(--surface2); color: var(--text2); }
+  .btn-save { background: var(--green); color: #fff; }
+  .btn-save:active, .btn-cancel:active { opacity: 0.8; transform: scale(0.98); }
+
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #1a1a18; color: #fff; padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+
+  .confirm-dialog { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: center; justify-content: center; padding: 24px; }
+  .confirm-dialog.open { display: flex; }
+  .confirm-box { background: var(--surface); border-radius: 16px; padding: 24px; max-width: 320px; width: 100%; }
+  .confirm-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+  .confirm-box p { font-size: 14px; color: var(--text2); line-height: 1.5; }
+  .confirm-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .confirm-btns button { flex: 1; padding: 12px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; border: none; cursor: pointer; }
+  .cbtn-cancel { background: var(--surface2); color: var(--text2); }
+  .cbtn-delete { background: var(--red); color: #fff; }
+
+  .cat-badge { display: inline-block; font-size: 11px; padding: 2px 8px; background: var(--surface2); color: var(--text3); border-radius: 20px; }
+</style>
+</head>
+<body>
+
+<!-- Main List View -->
+<div id="app">
+  <div class="header">
+    <div class="header-row">
+      <div class="header-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        </div>
+        <div>
+          <div class="header-title">Price Scout</div>
+          <div class="header-sub" id="header-sub">Track prices across stores</div>
+        </div>
+      </div>
+      <button class="btn-add" id="btn-add-product">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add
+      </button>
+    </div>
+  </div>
+  <div class="search-bar" id="search-bar" style="display:none">
+    <div class="search-inner">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="search-input" placeholder="Search products or categories…">
+    </div>
+  </div>
+  <div class="scroll-area" id="product-list-area"></div>
+</div>
+
+<!-- Detail View -->
+<div id="detail-view">
+  <div class="detail-header">
+    <button class="back-btn" id="back-btn">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      All products
+    </button>
+    <div class="detail-title-row">
+      <div>
+        <div class="detail-name" id="detail-name"></div>
+        <div class="detail-cat"><span class="cat-badge" id="detail-cat"></span></div>
+      </div>
+      <div class="detail-actions">
+        <button class="icon-btn" id="btn-edit-product" title="Edit product">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="icon-btn danger" id="btn-delete-product" title="Delete product">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="detail-scroll" id="detail-scroll">
+    <div class="summary-row" id="summary-row"></div>
+    <div class="section-label">Store prices</div>
+    <div id="store-list"></div>
+    <button class="add-store-btn" id="btn-add-store">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add store price
+    </button>
+  </div>
+</div>
+
+<!-- Product Modal -->
+<div class="modal-overlay" id="product-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="product-modal-title">Add product</div>
+    <div class="form-group">
+      <label class="form-label">Product name</label>
+      <input class="form-input" id="inp-product-name" type="text" placeholder="e.g. Tata Salt 1kg" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <select class="form-select" id="inp-product-cat">
+        <option>Grocery</option>
+        <option>Dairy</option>
+        <option>Vegetables</option>
+        <option>Fruits</option>
+        <option>Beverages</option>
+        <option>Snacks</option>
+        <option>Cleaning</option>
+        <option>Personal Care</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" id="product-modal-cancel">Cancel</button>
+      <button class="btn-save" id="product-modal-save">Save product</button>
+    </div>
+  </div>
+</div>
+
+<!-- Store Price Modal -->
+<div class="modal-overlay" id="store-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="store-modal-title">Add store price</div>
+    <div class="form-group">
+      <label class="form-label">Store name</label>
+      <input class="form-input" id="inp-store-name" type="text" placeholder="e.g. DMart, Big Bazaar, Reliance Fresh" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Price (₹)</label>
+      <input class="form-input" id="inp-store-price" type="number" placeholder="0.00" step="0.5" min="0" inputmode="decimal">
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" id="store-modal-cancel">Cancel</button>
+      <button class="btn-save" id="store-modal-save">Save price</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Dialog -->
+<div class="confirm-dialog" id="confirm-dialog">
+  <div class="confirm-box">
+    <h3 id="confirm-title">Are you sure?</h3>
+    <p id="confirm-msg"></p>
+    <div class="confirm-btns">
+      <button class="cbtn-cancel" id="confirm-cancel">Cancel</button>
+      <button class="cbtn-delete" id="confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'price-scout-v1';
+let state = { products: [] };
+let currentProductId = null;
+let editingStoreIdx = null;
+let editingProductId = null;
+let confirmCallback = null;
+
+// --- Storage ---
+function load() {
+  try { const d = localStorage.getItem(STORAGE_KEY); if (d) state = JSON.parse(d); } catch(e) {}
+}
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+
+// --- Helpers ---
+function fmt(n) {
+  return '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+function timeAgo(ts) {
+  if (!ts) return '';
+  const d = Math.floor((Date.now() - ts) / 86400000);
+  if (d === 0) return 'Updated today';
+  if (d === 1) return 'Updated yesterday';
+  if (d < 7) return 'Updated ' + d + 'd ago';
+  return 'Updated ' + new Date(ts).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+function getBest(p) {
+  if (!p.stores || !p.stores.length) return null;
+  return p.stores.reduce((a, b) => a.price < b.price ? a : b);
+}
+function getSavings(p) {
+  if (!p.stores || p.stores.length < 2) return null;
+  const prices = p.stores.map(s => s.price);
+  return +(Math.max(...prices) - Math.min(...prices)).toFixed(2);
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+function confirm(title, msg, cb) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('confirm-dialog').classList.add('open');
+  confirmCallback = cb;
+}
+document.getElementById('confirm-cancel').onclick = () => { document.getElementById('confirm-dialog').classList.remove('open'); confirmCallback = null; };
+document.getElementById('confirm-ok').onclick = () => { document.getElementById('confirm-dialog').classList.remove('open'); if (confirmCallback) confirmCallback(); confirmCallback = null; };
+
+// --- Views ---
+function showMain() {
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('detail-view').style.display = 'none';
+  currentProductId = null;
+  renderList();
+}
+function showDetail(id) {
+  currentProductId = id;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('detail-view').style.display = 'flex';
+  renderDetail();
+}
+
+// --- Render list ---
+function renderList() {
+  const search = (document.getElementById('search-input').value || '').toLowerCase();
+  const searchBar = document.getElementById('search-bar');
+  const sub = document.getElementById('header-sub');
+  const n = state.products.length;
+
+  if (n > 0) { searchBar.style.display = 'block'; sub.textContent = n + ' product' + (n !== 1 ? 's' : '') + ' tracked'; }
+  else { searchBar.style.display = 'none'; sub.textContent = 'Track prices across stores'; }
+
+  const filtered = state.products.filter(p =>
+    !search || p.name.toLowerCase().includes(search) || p.category.toLowerCase().includes(search)
+  );
+
+  const area = document.getElementById('product-list-area');
+  if (filtered.length === 0) {
+    area.innerHTML = `<div class="empty">
+      <div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
+      <h3>${n === 0 ? 'No products yet' : 'Nothing found'}</h3>
+      <p>${n === 0 ? 'Tap Add to start tracking<br>prices across your favourite stores.' : 'Try a different search term.'}</p>
+    </div>`;
+    return;
+  }
+
+  area.innerHTML = filtered.map(p => {
+    const best = getBest(p);
+    const savings = getSavings(p);
+    const pills = (p.stores || []).map(s =>
+      `<span class="pill ${best && s.name === best.name ? 'best' : ''}">${s.name} ${fmt(s.price)}</span>`
+    ).join('');
+    const savingsPill = savings ? `<span class="pill savings">Save ${fmt(savings)}</span>` : '';
+    return `<div class="product-card" onclick="showDetail('${p.id}')">
+      <div class="pc-top">
+        <div>
+          <div class="pc-name">${esc(p.name)}</div>
+          <div class="pc-cat">${esc(p.category)}</div>
+        </div>
+        <div class="pc-best">
+          ${best
+            ? `<div class="pc-price">${fmt(best.price)}</div><div class="pc-store-name">${esc(best.name)}</div>`
+            : `<div class="pc-no-price">No prices yet</div>`}
+        </div>
+      </div>
+      ${pills ? `<div class="pc-pills">${pills}${savingsPill}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// --- Render detail ---
+function renderDetail() {
+  const p = state.products.find(x => x.id === currentProductId);
+  if (!p) { showMain(); return; }
+  const best = getBest(p);
+  const savings = getSavings(p);
+
+  document.getElementById('detail-name').textContent = p.name;
+  document.getElementById('detail-cat').textContent = p.category;
+
+  // Summary
+  const sr = document.getElementById('summary-row');
+  if (best) {
+    sr.style.display = 'grid';
+    sr.innerHTML = `
+      <div class="summary-card">
+        <div class="sc-label">Best price</div>
+        <div class="sc-value">${fmt(best.price)}</div>
+        <div class="sc-sub">at ${esc(best.name)}</div>
+      </div>
+      <div class="summary-card">
+        <div class="sc-label">Max savings</div>
+        <div class="sc-value">${savings ? fmt(savings) : '—'}</div>
+        <div class="sc-sub">${savings ? 'vs most expensive' : 'add more stores'}</div>
+      </div>`;
+  } else {
+    sr.style.display = 'none';
+    sr.innerHTML = '';
+  }
+
+  // Stores
+  const storeList = document.getElementById('store-list');
+  if (!p.stores || p.stores.length === 0) {
+    storeList.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text3);font-size:14px;">No prices added yet.<br>Tap below to add your first store.</div>`;
+  } else {
+    const sorted = [...p.stores].sort((a, b) => a.price - b.price);
+    storeList.innerHTML = sorted.map((s, i) => {
+      const isBest = best && s.name === best.name;
+      const origIdx = p.stores.findIndex(x => x.name === s.name && x.price === s.price);
+      return `<div class="store-item ${isBest ? 'best' : ''}">
+        <div class="si-left">
+          <div class="si-icon">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+          <div>
+            <div class="si-name">${esc(s.name)}${isBest ? ' <span style="display:inline-block;font-size:10px;background:var(--green);color:#fff;padding:1px 7px;border-radius:20px;font-weight:600;vertical-align:1px;">Best</span>' : ''}</div>
+            <div class="si-date">${timeAgo(s.updatedAt)}</div>
+          </div>
+        </div>
+        <div class="si-right">
+          <div class="si-price">${fmt(s.price)}</div>
+          <div class="si-btns">
+            <button class="si-btn" onclick="editStore(${origIdx})" aria-label="Edit">
+              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="si-btn del" onclick="deleteStore(${origIdx})" aria-label="Delete">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// --- Product CRUD ---
+function openProductModal(id) {
+  editingProductId = id || null;
+  const p = id ? state.products.find(x => x.id === id) : null;
+  document.getElementById('product-modal-title').textContent = id ? 'Edit product' : 'Add product';
+  document.getElementById('inp-product-name').value = p ? p.name : '';
+  document.getElementById('inp-product-cat').value = p ? p.category : 'Grocery';
+  document.getElementById('product-modal').classList.add('open');
+  setTimeout(() => document.getElementById('inp-product-name').focus(), 100);
+}
+function closeProductModal() {
+  document.getElementById('product-modal').classList.remove('open');
+  editingProductId = null;
+}
+function saveProduct() {
+  const name = document.getElementById('inp-product-name').value.trim();
+  const cat = document.getElementById('inp-product-cat').value;
+  if (!name) { document.getElementById('inp-product-name').focus(); return; }
+  if (editingProductId) {
+    const p = state.products.find(x => x.id === editingProductId);
+    if (p) { p.name = name; p.category = cat; }
+  } else {
+    state.products.unshift({ id: genId(), name, category: cat, stores: [], createdAt: Date.now() });
+  }
+  save();
+  closeProductModal();
+  if (editingProductId && currentProductId === editingProductId) renderDetail();
+  else renderList();
+  showToast(editingProductId ? 'Product updated' : 'Product added');
+}
+function deleteProduct(id) {
+  const p = state.products.find(x => x.id === id);
+  confirm('Delete product?', `"${p.name}" and all its prices will be removed.`, () => {
+    state.products = state.products.filter(x => x.id !== id);
+    save();
+    showMain();
+    showToast('Product deleted');
+  });
+}
+
+// --- Store CRUD ---
+function openStoreModal(idx) {
+  editingStoreIdx = idx !== undefined ? idx : null;
+  const p = state.products.find(x => x.id === currentProductId);
+  const s = editingStoreIdx !== null ? p.stores[editingStoreIdx] : null;
+  document.getElementById('store-modal-title').textContent = s ? 'Edit store price' : 'Add store price';
+  document.getElementById('inp-store-name').value = s ? s.name : '';
+  document.getElementById('inp-store-price').value = s ? s.price : '';
+  document.getElementById('store-modal').classList.add('open');
+  setTimeout(() => document.getElementById('inp-store-name').focus(), 100);
+}
+function closeStoreModal() {
+  document.getElementById('store-modal').classList.remove('open');
+  editingStoreIdx = null;
+}
+function saveStore() {
+  const name = document.getElementById('inp-store-name').value.trim();
+  const price = parseFloat(document.getElementById('inp-store-price').value);
+  if (!name || isNaN(price) || price < 0) return;
+  const p = state.products.find(x => x.id === currentProductId);
+  if (!p) return;
+  if (!p.stores) p.stores = [];
+  if (editingStoreIdx !== null) {
+    p.stores[editingStoreIdx] = { name, price, updatedAt: Date.now() };
+  } else {
+    const existing = p.stores.findIndex(s => s.name.toLowerCase() === name.toLowerCase());
+    if (existing >= 0) p.stores[existing] = { name, price, updatedAt: Date.now() };
+    else p.stores.push({ name, price, updatedAt: Date.now() });
+  }
+  save();
+  closeStoreModal();
+  renderDetail();
+  showToast(editingStoreIdx !== null ? 'Price updated' : 'Store added');
+}
+function editStore(idx) { openStoreModal(idx); }
+function deleteStore(idx) {
+  const p = state.products.find(x => x.id === currentProductId);
+  const s = p.stores[idx];
+  confirm('Remove store?', `Remove ${s.name} price from this product?`, () => {
+    p.stores.splice(idx, 1);
+    save();
+    renderDetail();
+    showToast('Store removed');
+  });
+}
+
+// --- Event listeners ---
+document.getElementById('btn-add-product').onclick = () => openProductModal(null);
+document.getElementById('product-modal-cancel').onclick = closeProductModal;
+document.getElementById('product-modal-save').onclick = saveProduct;
+document.getElementById('inp-product-name').onkeydown = e => { if (e.key === 'Enter') saveProduct(); };
+
+document.getElementById('store-modal-cancel').onclick = closeStoreModal;
+document.getElementById('store-modal-save').onclick = saveStore;
+document.getElementById('inp-store-price').onkeydown = e => { if (e.key === 'Enter') saveStore(); };
+
+document.getElementById('back-btn').onclick = showMain;
+document.getElementById('btn-add-store').onclick = () => openStoreModal();
+document.getElementById('btn-edit-product').onclick = () => openProductModal(currentProductId);
+document.getElementById('btn-delete-product').onclick = () => deleteProduct(currentProductId);
+
+document.getElementById('search-input').oninput = renderList;
+
+// Close modals on backdrop tap
+document.getElementById('product-modal').onclick = e => { if (e.target === e.currentTarget) closeProductModal(); };
+document.getElementById('store-modal').onclick = e => { if (e.target === e.currentTarget) closeStoreModal(); };
+
+// Init
+load();
+showMain();
+</script>
+</body>
+</html>
